@@ -15,11 +15,16 @@ import requests
 import json
 import argparse
 from sys import argv
+from string import hexdigits
 
 
 
-def request_ipinfo_api(requested_ip) -> int:
-    ipinfo_api_requested_url = f"https://ipinfo.io/{requested_ip}/json"
+def request_ipinfo_api(ip_version: int, requested_ip) -> int:
+    if ip_version == 4:
+        ipinfo_api_requested_url = f"https://ipinfo.io/{requested_ip}/json"
+    else:
+        ipinfo_api_requested_url = f"https://v6.ipinfo.io/{requested_ip}/json"
+        print(ipinfo_api_requested_url)
     ipinfo_api_call = requests.get(ipinfo_api_requested_url)
     ipinfo_api_response_statuscode = ipinfo_api_call.status_code
     ipinfo_api_response_json = json.loads(ipinfo_api_call.text)
@@ -32,22 +37,50 @@ def request_ipinfo_api(requested_ip) -> int:
     print("\n")
     return ipinfo_api_response_statuscode
 
-def is_valid_ip(ip: str) -> bool:
+def is_valid_ipv4(ip: str) -> bool:
     if ip == "":
+        print("Didn't pass an IP Address.")
         return False
     if not ip.count(".") == 3:
+        print("Ensure IP Address is following the Dotted decimal notation (Dot-decimal notation) (e.g. 140.82.121.4)")
         return False
     octets = ip.split(".")
-    for octet in octets:
+    for i, octet in enumerate(octets):
         if octet.isdigit():
             octet = int(octet)
         else:
+            print(f"No digits ({octet}) in octet {i + 1}")
             return False
 
         if (octet < 0) or (octet > 255):
+            print(f"Number ({octet}) out of valid range in octet {i + 1}")
             return False
 
     return True
+
+def is_ipv4(ip: str) -> bool:
+    if ip.count(".") > 0:
+        return True
+    return False
+
+def is_valid_ipv6(ip: str) -> bool:
+    if ip == "":
+        print("Didn't pass an IP Address.")
+        return False
+    if not ip.count(":") == 7:
+        print("Please enter an valid IPv6 (e.g. 2001:0db8:0000:0044:5555:6666:7777:8888)")
+        return False
+
+    hextets = ip.split(":")
+    for hextet_nr, hextet in enumerate(hextets):
+        for character_nr, character in enumerate(hextet):
+            if character in hexdigits:
+                continue
+            else:
+                print(f"No hexdigit ({character}) in hextet {hextet_nr + 1} at character {character_nr + 1}")
+                return False
+    return True
+
 
 def get_args() -> argparse:
     parser = argparse.ArgumentParser(description="IPv4 Lookup shortcuts\nCommand example: python iplookup.py --ip 123.123.123.123")
@@ -55,10 +88,10 @@ def get_args() -> argparse:
     parser.add_argument("-ip", "--ip", action="store", dest="ip", type=str, help="Enter valid IP to look up.")
     return parser.parse_args()
 
-def get_own_ip() -> str:
+def get_own_ipv4() -> str: # TODO: checkip.amazonaws.com may return mulitple IP Addresses. Currently only handles one IP returned.
     api_uri = "https://checkip.amazonaws.com/"
     api_call = requests.get(api_uri)
-    return api_call.text[:-1]
+    return api_call.text[:-1] # cuts new-line at the end of the response
 
 def main():
     args_passed: bool = False
@@ -77,18 +110,22 @@ def main():
 
     if args_passed:
         if args.own_ip:
-            requested_ip = get_own_ip()
+            requested_ip = get_own_ipv4()
         else:
             requested_ip = args.ip
     else:
         requested_ip: str = input("Enter IP: ")
 
-    if not is_valid_ip(requested_ip):
-        print("Please enter an valid IP (e.g. 140.82.121.4; no IPv6)")
+    if is_ipv4(requested_ip):
+        if is_valid_ipv4(requested_ip):
+            api_statuscode: int = request_ipinfo_api(4, requested_ip)
+            if not api_statuscode == 200:
+                print(f"API call failed\nYour API call returned {api_statuscode} status code.")
     else:
-        api_statuscode: int = request_ipinfo_api(requested_ip)
-        if not api_statuscode == 200:
-            print(f"API call failed\nYour API call returned {api_statuscode} status code.")
+        if is_valid_ipv6(requested_ip):
+            api_statuscode: int = request_ipinfo_api(6, requested_ip)
+            if not api_statuscode == 200:
+                print(f"API call failed\nYour API call returned {api_statuscode} status code.")
 
 
 if __name__ == "__main__":
