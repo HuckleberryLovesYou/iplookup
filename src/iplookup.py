@@ -86,6 +86,8 @@ def is_valid_ipv6(ip: str) -> bool:
     if ip == "":
         print("Didn't pass an IPv6 Address.")
         return False
+    if ip.count(":") > 7:
+        print("Ensure every hextet in the IPv6 Address is separated by a column and follows common notation standards (e.g. 2001:4860:4860::8888)")
     if not ip.count(":") == 7:
         print("Detected shortened IPv6 Address.")
         if ip.count("::") != 1:
