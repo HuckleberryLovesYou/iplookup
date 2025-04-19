@@ -1,16 +1,5 @@
 #!/usr/bin/python3
 
-###########################################################################################################
-#        This code is inspired by ebola man                                                               #
-#        https://www.youtube.com/@ebolaman_                                                               #
-#        The idea came from this video:                                                                   #
-#        https://www.youtube.com/watch?v=oQxAVIZdktU                                                      #
-#        He made a similar program like this                                                              #
-#        in C# and I thought I should                                                                     #
-#        rewrite it in Python.                                                                            #
-###########################################################################################################
-
-
 import requests
 import json
 import argparse
