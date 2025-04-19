@@ -126,7 +126,7 @@ def main():
 
     if args_passed:
         if args.own_ip:
-            request_ipinfo_api(4, "self")
+            request_ipinfo_api("self")
             quit()
         else:
             if args.ipv4 is None and args.ipv6 is None:
